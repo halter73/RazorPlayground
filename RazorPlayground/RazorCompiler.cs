@@ -10,8 +10,10 @@ namespace RazorPlayground
         {
             var key = Guid.NewGuid().ToString();
             _engine.Options.DynamicTemplates[key] = templateString;
-            var template = await _engine.CompileTemplateAsync(key);
-            return new RazorTemplate(_engine, template);
+
+            // Precompile. This will be cached for later using the key.
+            _ = await _engine.CompileTemplateAsync(key);
+            return new RazorTemplate(_engine, key);
         }
     }
 }

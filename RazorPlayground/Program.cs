@@ -29,7 +29,9 @@ var razorTemplate = await razorCompiler.CompileAsync("""
 </html>
 """);
 
-app.MapGet("/razor-result/{input}", (int input) => razorTemplate.Render(input));
+app.MapGet("/razor-result/{input}", (int input) => razorTemplate.RenderResult(input));
+app.MapGet("/razor-string-result/{input}", (int input) => razorTemplate.RenderStringResult(input));
+app.MapGet("/razor-pooled-result/{input}", (int input) => razorTemplate.RenderPooledResult(input));
 
 //app.MapGet("/razor2/{input}", (int input) => razorEngine.CompileRenderStringAsync("key1", """
 //@for (var i = 0; i < @Model; i++)

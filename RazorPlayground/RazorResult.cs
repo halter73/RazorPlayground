@@ -1,30 +1,54 @@
-﻿using RazorLight;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using RazorLight;
 
 namespace RazorPlayground
 {
     public class RazorTemplate
     {
         private RazorLightEngine _engine;
-        private ITemplatePage _template;
+        private string _key;
 
-        public RazorTemplate(RazorLightEngine engine, ITemplatePage template)
+        private ConcurrentQueue<ITemplatePage> _templatePool = new();
+
+        public RazorTemplate(RazorLightEngine engine, string key)
         {
             _engine = engine;
-            _template = template;
+            _key = key;
         }
 
-        public IResult Render<T>(T model)
+        public ITemplatePage Template
         {
-            return new RenderedRazorResult<T>(_engine, _template, model);
+            get
+            {
+                var templateTask = _engine.CompileTemplateAsync(_key);
+                Debug.Assert(templateTask.IsCompletedSuccessfully);
+                return templateTask.GetAwaiter().GetResult();
+            }
         }
 
-        private class RenderedRazorResult<T> : IResult
+        public IResult RenderResult<T>(T model)
+        {
+            return new RazorResult<T>(_engine, Template, model);
+        }
+
+        public IResult RenderStringResult<T>(T model)
+        {
+            return new RazorStringResult<T>(_engine, Template, model);
+        }
+
+        public IResult RenderPooledResult<T>(T model)
+        {
+            return new RazorPooledResult<T>(this, model);
+        }
+
+        private class RazorResult<T> : IResult
         {
             private RazorLightEngine _engine;
             private ITemplatePage _template;
             private T _model;
 
-            public RenderedRazorResult(RazorLightEngine engine, ITemplatePage template, T model)
+            public RazorResult(RazorLightEngine engine, ITemplatePage template, T model)
             {
                 _engine = engine;
                 _template = template;
@@ -41,5 +65,55 @@ namespace RazorPlayground
                 await _engine.RenderTemplateAsync(_template, _model, textWriter);
             }
         }
+
+        private class RazorStringResult<T> : IResult
+        {
+            private RazorLightEngine _engine;
+            private ITemplatePage _template;
+            private T _model;
+
+            public RazorStringResult(RazorLightEngine engine, ITemplatePage template, T model)
+            {
+                _engine = engine;
+                _template = template;
+                _model = model;
+            }
+
+            public async Task ExecuteAsync(HttpContext httpContext)
+            {
+                httpContext.Response.ContentType = "text/html";
+
+                var body = await _engine.RenderTemplateAsync(_template, _model);
+                await httpContext.Response.WriteAsync(body);
+            }
+        }
+
+        private class RazorPooledResult<T> : IResult
+        {
+            private RazorTemplate _parent;
+            private T _model;
+
+            public RazorPooledResult(RazorTemplate template, T model)
+            {
+                _parent = template;
+                _model = model;
+            }
+
+            public async Task ExecuteAsync(HttpContext httpContext)
+            {
+                httpContext.Response.ContentType = "text/html";
+
+                if (!_parent._templatePool.TryDequeue(out var template))
+                {
+                    template = _parent.Template;
+                }
+                
+                await using var textWriter = new StreamWriter(httpContext.Response.Body);
+                await _parent._engine.RenderTemplateAsync(template, _model, textWriter);
+
+                _parent._templatePool.Enqueue(template);
+            }
+        }
+
     }
 }
