@@ -6,10 +6,10 @@ namespace RazorPlayground
 {
     public class RazorTemplate
     {
-        private RazorLightEngine _engine;
-        private string _key;
+        private readonly RazorLightEngine _engine;
+        private readonly string _key;
 
-        private ConcurrentQueue<ITemplatePage> _templatePool = new();
+        private readonly ConcurrentQueue<ITemplatePage> _templatePool = new();
 
         public RazorTemplate(RazorLightEngine engine, string key)
         {
@@ -49,9 +49,9 @@ namespace RazorPlayground
 
         private class RazorResult<T> : IResult
         {
-            private RazorLightEngine _engine;
-            private ITemplatePage _template;
-            private T _model;
+            private readonly RazorLightEngine _engine;
+            private readonly ITemplatePage _template;
+            private readonly T _model;
 
             public RazorResult(RazorLightEngine engine, ITemplatePage template, T model)
             {
@@ -73,9 +73,9 @@ namespace RazorPlayground
 
         private class RazorStringResult<T> : IResult
         {
-            private RazorLightEngine _engine;
-            private ITemplatePage _template;
-            private T _model;
+            private readonly RazorLightEngine _engine;
+            private readonly ITemplatePage _template;
+            private readonly T _model;
 
             public RazorStringResult(RazorLightEngine engine, ITemplatePage template, T model)
             {
@@ -95,8 +95,8 @@ namespace RazorPlayground
 
         private class RazorPooledResult<T> : IResult
         {
-            private RazorTemplate _parent;
-            private T _model;
+            private readonly RazorTemplate _parent;
+            private readonly T _model;
 
             public RazorPooledResult(RazorTemplate template, T model)
             {
@@ -123,8 +123,8 @@ namespace RazorPlayground
 
         private class RazorPooledStringResult<T> : IResult
         {
-            private RazorTemplate _parent;
-            private T _model;
+            private readonly RazorTemplate _parent;
+            private readonly T _model;
 
             public RazorPooledStringResult(RazorTemplate template, T model)
             {

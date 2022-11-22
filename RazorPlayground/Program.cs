@@ -34,4 +34,6 @@ app.MapGet("/razor-string-result/{input}", (int input) => razorTemplate.RenderSt
 app.MapGet("/razor-pooled-result/{input}", (int input) => razorTemplate.RenderPooledResult(input));
 app.MapGet("/razor-pooled-string-result/{input}", (int input) => razorTemplate.RenderPooledStringResult(input));
 
+app.MapGet("/hand-rolled/{input}", (int input) => new HandRolledResult(input));
+
 app.Run();
