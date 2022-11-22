@@ -32,5 +32,6 @@ var razorTemplate = await razorCompiler.CompileAsync("""
 app.MapGet("/razor-result/{input}", (int input) => razorTemplate.RenderResult(input));
 app.MapGet("/razor-string-result/{input}", (int input) => razorTemplate.RenderStringResult(input));
 app.MapGet("/razor-pooled-result/{input}", (int input) => razorTemplate.RenderPooledResult(input));
+app.MapGet("/razor-pooled-string-result/{input}", (int input) => razorTemplate.RenderPooledStringResult(input));
 
 app.Run();

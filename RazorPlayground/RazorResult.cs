@@ -42,6 +42,11 @@ namespace RazorPlayground
             return new RazorPooledResult<T>(this, model);
         }
 
+        public IResult RenderPooledStringResult<T>(T model)
+        {
+            return new RazorPooledStringResult<T>(this, model);
+        }
+
         private class RazorResult<T> : IResult
         {
             private RazorLightEngine _engine;
@@ -115,5 +120,32 @@ namespace RazorPlayground
             }
         }
 
+
+        private class RazorPooledStringResult<T> : IResult
+        {
+            private RazorTemplate _parent;
+            private T _model;
+
+            public RazorPooledStringResult(RazorTemplate template, T model)
+            {
+                _parent = template;
+                _model = model;
+            }
+
+            public async Task ExecuteAsync(HttpContext httpContext)
+            {
+                httpContext.Response.ContentType = "text/html";
+
+                if (!_parent._templatePool.TryDequeue(out var template))
+                {
+                    template = _parent.Template;
+                }
+                
+                var body = await _parent._engine.RenderTemplateAsync(template, _model);
+                await httpContext.Response.WriteAsync(body);
+
+                _parent._templatePool.Enqueue(template);
+            }
+        }
     }
 }
